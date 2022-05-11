@@ -1,21 +1,25 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	logger := log.New(os.Stdout, "", log.LstdFlags)
+
 	logger.Printf("Starting")
 
 	reg := prometheus.NewRegistry()
@@ -36,15 +40,28 @@ func main() {
 		logger.Printf("%s", writtenBytes)
 	})
 
+	srv := &http.Server{
+		Addr:    "localhost:8000",
+		Handler: mux,
+	}
+
 	go func() {
-		err := http.ListenAndServe("localhost:8000", mux)
+		err := srv.ListenAndServe()
 		if err != http.ErrServerClosed {
 			fmt.Println()
 		}
-
 	}()
 
 	logger.Printf("Running...")
 	<-shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		cancel()
+	}()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Fatalf("Server Shutdown Failed:%+v", err)
+	}
+
 	logger.Printf("Shutting down...")
 }

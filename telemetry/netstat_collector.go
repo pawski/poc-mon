@@ -6,7 +6,7 @@ import (
 
 var (
 	Observations      prometheus.Counter
-	ObservationsBytes prometheus.Counter
+	ObservationsBytes *prometheus.CounterVec
 
 	Duration *prometheus.GaugeVec
 )

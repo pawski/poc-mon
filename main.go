@@ -36,13 +36,15 @@ func main() {
 	})
 	reg.MustRegister(telemetry.Observations)
 
-	telemetry.ObservationsBytes = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace:   "observer",
-		Subsystem:   "scrapes",
-		Name:        "bytes_total",
-		Help:        "Total number of bytes returned by scrape",
-		ConstLabels: map[string]string{"host": "localhost"},
-	})
+	telemetry.ObservationsBytes = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "observer",
+			Subsystem: "scrapes",
+			Name:      "bytes_total",
+			Help:      "Total number of bytes returned by scrape",
+		},
+		[]string{"target"},
+	)
 	reg.MustRegister(telemetry.ObservationsBytes)
 
 	telemetry.Duration = prometheus.NewGaugeVec(
@@ -50,9 +52,8 @@ func main() {
 			Namespace: "observer",
 			Subsystem: "test",
 			Name:      "http_call_duration",
-			Help:      "Time of last http test call",
+			Help:      "Time of http test call",
 		},
-
 		[]string{"host", "target", "code"},
 	)
 	reg.MustRegister(telemetry.Duration)
@@ -119,7 +120,7 @@ func main() {
 					logger.Printf("%s", err)
 					continue
 				}
-				telemetry.ObservationsBytes.Add(float64(len(b)))
+				telemetry.ObservationsBytes.WithLabelValues(testUrl).Add(float64(len(b)))
 			}
 		}
 	}()

@@ -100,7 +100,7 @@ func main() {
 			case <-stopTest:
 				return
 			case <-ticker.C:
-				request, err := http.NewRequest("GET", testUrl, nil)
+				request, err := http.NewRequest("GET", testUrl, nil) // HEAD maybe?
 				if err != nil {
 					logger.Printf("%s", err)
 					continue

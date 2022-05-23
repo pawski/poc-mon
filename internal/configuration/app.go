@@ -11,7 +11,8 @@ var appConfigFile = "app.yml"
 var appConfiguration AppConfig
 
 type AppConfig struct {
-	TestUrl string `yaml:"test_url"`
+	TestUrl               string `yaml:"test_url"`
+	EnableInternalMetrics bool   `yaml:"enable_internal_metrics_collector"`
 }
 
 func GetApp() (AppConfig, error) {

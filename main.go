@@ -69,10 +69,12 @@ func main() {
 	)
 	reg.MustRegister(telemetry.Duration)
 
-	reg.MustRegister(collectors.NewBuildInfoCollector())
-	reg.MustRegister(collectors.NewGoCollector(collectors.WithGoCollections(
-		collectors.GoRuntimeMemStatsCollection | collectors.GoRuntimeMetricsCollection,
-	)))
+	if appConfig.EnableInternalMetrics {
+		reg.MustRegister(collectors.NewBuildInfoCollector())
+		reg.MustRegister(collectors.NewGoCollector(collectors.WithGoCollections(
+			collectors.GoRuntimeMemStatsCollection | collectors.GoRuntimeMetricsCollection,
+		)))
+	}
 
 	h := promhttp.HandlerFor(
 		reg,

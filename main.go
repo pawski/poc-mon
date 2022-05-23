@@ -15,13 +15,24 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/pawski/poc-mon/telemetry"
+	"github.com/pawski/poc-mon/internal/configuration"
+	"github.com/pawski/poc-mon/internal/telemetry"
 )
 
 func main() {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	logger := log.New(os.Stdout, "", log.LstdFlags)
+
+	appConfig, err := configuration.GetApp()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	envConfig, err := configuration.GetEnv()
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	logger.Printf("Starting")
 
@@ -81,7 +92,7 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Addr:    "localhost:8000",
+		Addr:    envConfig.HttpServerAddress,
 		Handler: mux,
 	}
 
@@ -92,7 +103,6 @@ func main() {
 		defer func() {
 			wg.Done()
 		}()
-		testUrl := "https://github.com/pawski/poc-mon"
 		client := http.Client{}
 		ticker := time.NewTicker(time.Second)
 		for {
@@ -100,7 +110,7 @@ func main() {
 			case <-stopTest:
 				return
 			case <-ticker.C:
-				request, err := http.NewRequest("GET", testUrl, nil) // HEAD maybe?
+				request, err := http.NewRequest("GET", appConfig.TestUrl, nil) // HEAD maybe?
 				if err != nil {
 					logger.Printf("%s", err)
 					continue
@@ -114,13 +124,13 @@ func main() {
 					testStatus = ""
 				}
 				testStatus = response.Status
-				telemetry.Duration.WithLabelValues("localhost", testUrl, testStatus).Set(time.Since(start).Seconds())
+				telemetry.Duration.WithLabelValues("localhost", appConfig.TestUrl, testStatus).Set(time.Since(start).Seconds())
 				b, err := io.ReadAll(response.Body)
 				if err != nil {
 					logger.Printf("%s", err)
 					continue
 				}
-				telemetry.ObservationsBytes.WithLabelValues(testUrl).Add(float64(len(b)))
+				telemetry.ObservationsBytes.WithLabelValues(appConfig.TestUrl).Add(float64(len(b)))
 			}
 		}
 	}()
@@ -132,7 +142,7 @@ func main() {
 		}
 	}()
 
-	logger.Printf("Running...")
+	logger.Printf("Running on %s...", envConfig.HttpServerAddress)
 	<-shutdown
 	stopTest <- struct{}{}
 	wg.Wait()

@@ -2,7 +2,11 @@ module github.com/pawski/poc-mon
 
 go 1.17
 
-require github.com/prometheus/client_golang v1.12.2
+require (
+	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.12.2
+	gopkg.in/yaml.v2 v2.4.0
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

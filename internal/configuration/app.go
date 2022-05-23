@@ -12,6 +12,7 @@ var appConfiguration AppConfig
 
 type AppConfig struct {
 	TestUrl               string `yaml:"test_url"`
+	TestIntervalSeconds   int    `yaml:"test_interval_seconds"`
 	EnableInternalMetrics bool   `yaml:"enable_internal_metrics_collector"`
 }
 

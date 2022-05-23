@@ -106,7 +106,7 @@ func main() {
 			wg.Done()
 		}()
 		client := http.Client{}
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(time.Second * time.Duration(appConfig.TestIntervalSeconds))
 		for {
 			select {
 			case <-stopTest:

@@ -1,4 +1,4 @@
-build/*
+build/bin/*
 !build/bin/.gitkeep
 
 env.yml
